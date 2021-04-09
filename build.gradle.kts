@@ -1,6 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.Coroutines
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
@@ -24,6 +21,7 @@ repositories {
 }
 
 dependencies {
+    implementation("edu.uci.ics:crawler4j:4.4.0")
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-locations:$ktor_version")
     implementation("io.ktor:ktor-gson:$ktor_version")
