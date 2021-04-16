@@ -31,6 +31,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.apache.lucene:lucene-core:8.8.2")
     implementation("edu.uci.ics:crawler4j:4.4.0")
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-locations:$ktor_version")
