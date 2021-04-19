@@ -63,10 +63,12 @@ class KMongoPageRepository : PageRepository {
     override suspend fun computePageRank(pageRankIteration: Int, skip: Long, limit: Long) {
         val inputCollection = asyncDatabase.getCollection<Page>(if (pageRankIteration == 1) "pages" else "pageRank_" + (pageRankIteration - 1))
         val outputCollection = asyncDatabase.getCollection<Page>("pageRank_$pageRankIteration")
-        inputCollection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map {
+        inputCollection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map { it ->
             val pg = it.pageRank / it.outlinksCount
 
-            outputCollection.updateMany(Page::url `in` it.outlinks, inc(Page::pageRank, pg), UpdateOptions().upsert(true))
+            it.outlinks.map { outlink ->
+                outputCollection.updateOne(Page::url eq outlink, inc(Page::pageRank, pg), UpdateOptions().upsert(true))
+            }
             outputCollection.updateOne(Page::url eq it.url, set(SetTo(Page::outlinks, it.outlinks), SetTo(Page::outlinksCount, it.outlinksCount), SetTo(Page::previousPageRank, it.pageRank)), UpdateOptions().upsert(true))
         }.collect()
     }
