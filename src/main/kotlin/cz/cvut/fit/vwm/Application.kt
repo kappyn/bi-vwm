@@ -2,6 +2,7 @@ package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.Controller.homePage
 import cz.cvut.fit.vwm.Controller.results
+import cz.cvut.fit.vwm.model.WebDocument
 import cz.cvut.fit.vwm.persistence.PageRepository
 import cz.cvut.fit.vwm.persistence.impl.KMongoPageRepository
 import cz.cvut.fit.vwm.service.PageService
@@ -22,6 +23,7 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import kotlinx.css.CSSBuilder
 import kotlinx.html.body
+import org.apache.lucene.document.Document
 import org.koin.dsl.module
 import org.koin.ktor.ext.Koin
 import org.koin.logger.SLF4JLogger
