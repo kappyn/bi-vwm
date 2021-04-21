@@ -12,6 +12,7 @@ import edu.uci.ics.crawler4j.crawler.Page as CrawledPage
 
 class DomainCrawler : WebCrawler() {
 
+
     val service by inject<PageService>(PageService::class.java)
 
     /**
@@ -25,7 +26,7 @@ class DomainCrawler : WebCrawler() {
      * referringPage parameter to make the decision.
      */
     override fun shouldVisit(referringPage: CrawledPage?, url: WebURL): Boolean {
-        val href: String = url.getURL().toLowerCase()
+        val href: String = url.url.toLowerCase()
         return (!FILTERS.matcher(href).matches()
                 && href.startsWith("https://cs.wikipedia.org/"))
     }

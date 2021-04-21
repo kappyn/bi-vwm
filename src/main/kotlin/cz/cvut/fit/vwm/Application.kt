@@ -39,6 +39,9 @@ fun main(args: Array<String>): Unit =
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
+    // TODO: move to appropriate place (needed this instance to be accessible across all endpoints)
+    var lucene: SimilarityModule = SimilarityModule("similarity");
+
     install(Locations) {
     }
 
@@ -80,8 +83,7 @@ fun Application.module(testing: Boolean = false) {
             val robotstxtServer = RobotstxtServer(robotstxtConfig, pageFetcher)
             val controller = CrawlController(config, pageFetcher, robotstxtServer)
 
-            // For each crawl, you need to add some seed urls. These are the first
-            // URLs that are fetched and then the crawler starts following links
+            // For each crawl, you need to add some seed urls. These are the first URLs that are fetched and then the crawler starts following links
             // which are found in these pages
             controller.addSeed(seed)
 
@@ -96,6 +98,54 @@ fun Application.module(testing: Boolean = false) {
                 body {
                     +"Crawling started"
                 }
+            }
+        }
+
+        post("/init") {
+            try {
+                val aDoc: Document = lucene.createDocumentIndex(
+                    WebDocument(
+                        "1",
+                        "Test 1",
+                        "Entropie je veličina s velkým významem, neboť umožňuje formulovat druhou hlavní větu termodynamiky, a vyjádřit kvantitativně nevratnost tepelných pochodů. Tuto skutečnost vyjadřuje princip růstu entropie."
+                    )
+                )
+                val bDoc: Document = lucene.createDocumentIndex(
+                    WebDocument(
+                        "2",
+                        "Test 2",
+                        "Celková entropie izolované soustavy dvou těles různých teplot tedy roste. Jsou-li teploty dosti blízké, nebo jsou-li tělesa od sebe dostatečně dobře izolována, může být změna entropie libovolně malá. V takové soustavě prakticky nedochází k výměně tepla a soustava je blízká tepelné rovnováze. Děje, které probíhají v takové soustavě, lze považovat za vratné, a jejich entropie se téměř nemění. Při vratném adiabatickém ději může být tedy entropie stálá, avšak nikdy nemůže klesat."
+                    )
+                )
+                val cDoc: Document = lucene.createDocumentIndex(
+                    WebDocument(
+                        "3",
+                        "Test 3",
+                        "Stručně řečeno je entropie střední hodnota informace jednoho kódovaného znaku. Míra entropie souvisí s problematikou generování sekvence náhodných čísel (případně pseudonáhodných čísel), protože sekvence naprosto náhodných čísel by měla mít maximální míru entropie. Shannonova entropie také tvoří limit při bezeztrátové kompresi dat, laicky řečeno komprimovaná data nelze beze ztráty informace „zhustit“ více, než dovoluje jejich entropie."
+                    )
+                )
+                lucene.addDocumentToIndex(aDoc)
+                lucene.addDocumentToIndex(bDoc)
+                lucene.addDocumentToIndex(cDoc)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        post("/similarity") {
+            try {
+                val query = context.parameters["q"] ?: "none"
+                lucene.printResults(lucene.querySearch(query))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        post("/clear") {
+            try {
+                lucene.deleteIndex()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
