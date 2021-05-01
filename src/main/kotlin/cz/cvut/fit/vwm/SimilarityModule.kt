@@ -46,19 +46,17 @@ class SimilarityModule(private val directory: String) {
         return retv
     }
 
-    @Throws(Exception::class)
-    fun removeDocumentFromIndex(docID: String) {
-        val termToDelete: Term = Term("id", docID)
-        this.IndxWriter.deleteDocuments(termToDelete)
-        this.IndxWriter.flush()
-        this.IndxWriter.commit()
-        print("Document $docID has been removed from the index.\n")
-    }
+//    @Throws(Exception::class)
+//    fun removeDocumentFromIndex(docID: String) {
+//        val termToDelete: Term = Term("id", docID)
+//        this.IndxWriter.deleteDocuments(termToDelete)
+//        this.IndxWriter.flush()
+//        print("Document $docID has been removed from the index.\n")
+//    }
 
     @Throws(Exception::class)
     fun deleteIndex() {
         this.IndxWriter.deleteAll()
-        this.IndxWriter.flush()
         this.IndxWriter.commit()
         print("Lucene index has been deleted.\n")
     }
@@ -67,7 +65,6 @@ class SimilarityModule(private val directory: String) {
     fun addDocumentToIndex(docToAdd: Document) {
         this.IndxWriter.addDocument(docToAdd)
         this.IndxWriter.flush()
-        this.IndxWriter.commit()
         print("Successfully written file " + docToAdd.getField("title").stringValue() + " to the index.\n")
     }
 
@@ -103,6 +100,10 @@ class SimilarityModule(private val directory: String) {
 
     fun setDocumentCount(pagesToIndex: Int) {
         this.DocCnt = pagesToIndex
+    }
+
+    fun finishIndexing() {
+        this.IndxWriter.commit()
     }
 }
 
