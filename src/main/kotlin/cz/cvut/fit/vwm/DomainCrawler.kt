@@ -77,14 +77,19 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
 
     companion object {
         private val FILTERS: Pattern = Pattern.compile(
-            ".*(\\.(css|js|gif|jpg"
+            ".*(\\.(css|js|gif|jpg|svg"
                     + "|png|mp3|mp4|zip|gz))$"
         )
 
+        private val DOUBLEDOT = Pattern.compile("https://cs\\.wikipedia\\.org/wiki/.*:.*")
+
         fun shouldVisit(url: WebURL): Boolean {
             val href: String = url.getURL().toLowerCase()
+
             return (!FILTERS.matcher(href).matches()
-                    && href.startsWith("https://cs.wikipedia.org/"))
+                    && href.startsWith("https://cs.wikipedia.org/wiki/")
+                    && !DOUBLEDOT.matcher(href).matches()
+                    )
         }
     }
 }
