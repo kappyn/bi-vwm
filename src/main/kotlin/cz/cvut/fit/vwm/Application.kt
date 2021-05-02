@@ -42,10 +42,8 @@ fun main(args: Array<String>): Unit =
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
-
     val pageRankService by inject<PageRankService>()
     val pageRepository by inject<PageRepository>()
-
     val similarity: SimilarityService by inject()
 
     install(Locations) {
@@ -127,7 +125,6 @@ fun Application.module(testing: Boolean = false) {
         }
 
         post("/similarity") {
-            // postman: http://0.0.0.0:8080/similarity?q=Francie
             try {
                 val query = context.parameters["q"] ?: "none"
                 similarity.getResults(query)
@@ -137,7 +134,6 @@ fun Application.module(testing: Boolean = false) {
         }
 
         post("/clear") {
-            // postman: http://0.0.0.0:8080/clear
             try {
                 similarity.clear()
             } catch (e: Exception) {

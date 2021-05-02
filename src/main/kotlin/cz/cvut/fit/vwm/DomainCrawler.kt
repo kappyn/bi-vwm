@@ -47,7 +47,6 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
             val htmlParseData: HtmlParseData = page.parseData as HtmlParseData
             val text: String = htmlParseData.text
             val html: String = htmlParseData.html
-
             val outlinks: Set<WebURL> = htmlParseData.outgoingUrls.filter { shouldVisit(it) }.toSet()
 
             println("Text length: " + text.length)
@@ -67,7 +66,6 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
     override fun onBeforeExit() {
         similarity.updateChanges()
         super.onBeforeExit()
-
         GlobalScope.launch {
             val pages = pageRepository.getPagesCount()
             pageRepository.setPageRank(1.0 / pages)
