@@ -4,6 +4,7 @@ import cz.cvut.fit.vwm.Controller.homePage
 import cz.cvut.fit.vwm.Controller.results
 import cz.cvut.fit.vwm.persistence.PageRepository
 import cz.cvut.fit.vwm.persistence.impl.KMongoPageRepository
+import cz.cvut.fit.vwm.service.PageRankService
 import cz.cvut.fit.vwm.service.PageService
 import cz.cvut.fit.vwm.service.SimilarityService
 import cz.cvut.fit.vwm.view.Styles.home
@@ -21,6 +22,8 @@ import io.ktor.http.*
 import io.ktor.locations.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.css.CSSBuilder
 import kotlinx.html.body
 import org.koin.dsl.module
@@ -39,6 +42,10 @@ fun main(args: Array<String>): Unit =
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
+
+    val pageRankService by inject<PageRankService>()
+    val pageRepository by inject<PageRepository>()
+
     val similarity: SimilarityService by inject()
 
     install(Locations) {
@@ -106,6 +113,19 @@ fun Application.module(testing: Boolean = false) {
             }
         }
 
+        post("/pageRank") {
+
+            GlobalScope.launch {
+                pageRankService.compute(pageRepository.getPagesCount())
+            }
+            call.respondHtml {
+                body {
+                    +"Computing started"
+                }
+            }
+
+        }
+
         post("/similarity") {
             // postman: http://0.0.0.0:8080/similarity?q=Francie
             try {
@@ -147,5 +167,6 @@ val similarityModule = module {
 
 val pageRepositoryModule = module {
     single { PageService(get()) }
+    single { PageRankService(get(), get()) }
     single<PageRepository> { KMongoPageRepository() }
 }

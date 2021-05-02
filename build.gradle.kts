@@ -47,4 +47,5 @@ dependencies {
     implementation("org.litote.kmongo:kmongo-coroutine-serialization:4.2.6")
     implementation("io.insert-koin:koin-ktor:$koin_version")
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 }

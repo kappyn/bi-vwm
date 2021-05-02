@@ -5,8 +5,10 @@ import cz.cvut.fit.vwm.persistence.PageRepository
 import edu.uci.ics.crawler4j.url.WebURL
 
 class PageService(val repository: PageRepository) {
-    suspend fun updatePage(url: String, outlinks: Int, title: String?, text: String) {
-        repository.updatePage(url, outlinks, title ?: url, text)
+
+
+    suspend fun updatePage(url: String, outlinks: Set<WebURL>, title: String?, text: String) {
+        repository.updatePage(url, outlinks.map { it.url }, title ?: url, text)
     }
 
     suspend fun updateInlinks(outlinks: Set<WebURL>) {

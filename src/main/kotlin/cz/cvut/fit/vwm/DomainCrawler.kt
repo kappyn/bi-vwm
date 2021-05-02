@@ -1,12 +1,15 @@
 package cz.cvut.fit.vwm
 
-import cz.cvut.fit.vwm.service.PageService
 import cz.cvut.fit.vwm.model.WebDocument
+import cz.cvut.fit.vwm.persistence.PageRepository
+import cz.cvut.fit.vwm.service.PageRankService
+import cz.cvut.fit.vwm.service.PageService
 import cz.cvut.fit.vwm.service.SimilarityService
 import edu.uci.ics.crawler4j.crawler.WebCrawler
 import edu.uci.ics.crawler4j.parser.HtmlParseData
 import edu.uci.ics.crawler4j.url.WebURL
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.apache.lucene.document.Document
 import org.koin.java.KoinJavaComponent.inject
 import java.util.regex.Pattern
@@ -14,7 +17,10 @@ import edu.uci.ics.crawler4j.crawler.Page as CrawledPage
 
 class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
 
-    val service by inject<PageService>(PageService::class.java)
+    val pageService by inject<PageService>(PageService::class.java)
+    val pageRankService by inject<PageRankService>(PageRankService::class.java)
+    val pageRepository by inject<PageRepository>(PageRepository::class.java)
+
 
     /**
      * This method receives two parameters. The first parameter is the page
@@ -27,9 +33,7 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
      * referringPage parameter to make the decision.
      */
     override fun shouldVisit(referringPage: CrawledPage?, url: WebURL): Boolean {
-        val href: String = url.url.toLowerCase()
-        return (!FILTERS.matcher(href).matches()
-                && href.startsWith("https://cs.wikipedia.org/"))
+        return Companion.shouldVisit(url)
     }
 
     /**
@@ -43,7 +47,8 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
             val htmlParseData: HtmlParseData = page.parseData as HtmlParseData
             val text: String = htmlParseData.text
             val html: String = htmlParseData.html
-            val outlinks: Set<WebURL> = htmlParseData.outgoingUrls
+
+            val outlinks: Set<WebURL> = htmlParseData.outgoingUrls.filter { shouldVisit(it) }.toSet()
 
             println("Text length: " + text.length)
             println("Html length: " + html.length)
@@ -51,10 +56,10 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
 
             val luceneDoc: Document = similarity.createDocument(WebDocument("666", page.webURL.url, text))
 
-            runBlocking {
+            GlobalScope.launch {
                 similarity.addDocument(luceneDoc)
-                service.updatePage(url, outlinks.size, htmlParseData.title, text)
-                service.updateInlinks(outlinks)
+                pageService.updatePage(url, outlinks, htmlParseData.title, text)
+                pageService.updateInlinks(outlinks)
             }
         }
     }
@@ -62,6 +67,12 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
     override fun onBeforeExit() {
         similarity.updateChanges()
         super.onBeforeExit()
+
+        GlobalScope.launch {
+            val pages = pageRepository.getPagesCount()
+            pageRepository.setPageRank(1.0 / pages)
+            pageRankService.compute(pages)
+        }
     }
 
     companion object {
@@ -69,5 +80,11 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
             ".*(\\.(css|js|gif|jpg"
                     + "|png|mp3|mp4|zip|gz))$"
         )
+
+        fun shouldVisit(url: WebURL): Boolean {
+            val href: String = url.getURL().toLowerCase()
+            return (!FILTERS.matcher(href).matches()
+                    && href.startsWith("https://cs.wikipedia.org/"))
+        }
     }
 }
