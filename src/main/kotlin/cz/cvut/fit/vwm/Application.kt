@@ -2,10 +2,10 @@ package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.Controller.homePage
 import cz.cvut.fit.vwm.Controller.results
-import cz.cvut.fit.vwm.model.WebDocument
 import cz.cvut.fit.vwm.persistence.PageRepository
 import cz.cvut.fit.vwm.persistence.impl.KMongoPageRepository
 import cz.cvut.fit.vwm.service.PageService
+import cz.cvut.fit.vwm.service.SimilarityService
 import cz.cvut.fit.vwm.view.Styles.home
 import edu.uci.ics.crawler4j.crawler.CrawlConfig
 import edu.uci.ics.crawler4j.crawler.CrawlController
@@ -23,9 +23,9 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import kotlinx.css.CSSBuilder
 import kotlinx.html.body
-import org.apache.lucene.document.Document
 import org.koin.dsl.module
 import org.koin.ktor.ext.Koin
+import org.koin.ktor.ext.inject
 import org.koin.logger.SLF4JLogger
 
 
@@ -39,8 +39,7 @@ fun main(args: Array<String>): Unit =
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
-    // TODO: move to appropriate place (needed this instance to be accessible across all endpoints)
-    var similarity: SimilarityModule = SimilarityModule("similarity");
+    val similarity: SimilarityService by inject()
 
     install(Locations) {
     }
@@ -52,7 +51,10 @@ fun Application.module(testing: Boolean = false) {
 
     install(Koin) {
         SLF4JLogger()
-        modules(pageRepositoryModule)
+        listOf(
+             modules(pageRepositoryModule),
+             modules(similarityModule)
+        )
     }
 
     routing {
@@ -91,8 +93,7 @@ fun Application.module(testing: Boolean = false) {
             val factory: WebCrawlerFactory<DomainCrawler> = WebCrawlerFactory { DomainCrawler(similarity) }
 
             // Creates a new instance of IndexWriter for each crawling session
-            similarity.initIndexWriter()
-            similarity.setDocumentCount(config.maxPagesToFetch)
+            similarity.instantiate(config.maxPagesToFetch)
 
             // Start the crawl. This is a blocking operation, meaning that your code
             // will reach the line after this only when crawling is finished.
@@ -109,7 +110,7 @@ fun Application.module(testing: Boolean = false) {
             // postman: http://0.0.0.0:8080/similarity?q=Francie
             try {
                 val query = context.parameters["q"] ?: "none"
-                similarity.printResults(similarity.querySearch(query), query)
+                similarity.getResults(query)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -118,7 +119,7 @@ fun Application.module(testing: Boolean = false) {
         post("/clear") {
             // postman: http://0.0.0.0:8080/clear
             try {
-                similarity.deleteIndex()
+                similarity.clear()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -137,6 +138,11 @@ fun Application.module(testing: Boolean = false) {
 
 suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
     this.respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)
+}
+
+val similarityModule = module {
+    single { SimilarityService(get()) }
+    single { SimilarityModule("similarity")}
 }
 
 val pageRepositoryModule = module {

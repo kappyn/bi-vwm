@@ -13,7 +13,7 @@ import org.apache.lucene.store.FSDirectory
 import org.apache.lucene.util.QueryBuilder
 import java.nio.file.Paths
 
-class SimilarityModule(private val directory: String) {
+class SimilarityModule(private val directory: String = "similarity") {
     private var DocCnt: Int
     private val Index: Directory
     private val Analyzer: StandardAnalyzer
@@ -32,12 +32,6 @@ class SimilarityModule(private val directory: String) {
     }
 
     @Throws(Exception::class)
-    fun initIndexWriter() {
-        this.IndxWriter.close()
-        this.IndxWriter = IndexWriter(Index, IndexWriterConfig(this.Analyzer))
-    }
-
-    @Throws(Exception::class)
     fun createDocumentIndex(doc: WebDocument): Document {
         val retv: Document = Document()
         retv.add(StringField("id", doc.id, Field.Store.YES))
@@ -45,14 +39,6 @@ class SimilarityModule(private val directory: String) {
         retv.add(TextField("content", doc.content, Field.Store.NO))
         return retv
     }
-
-//    @Throws(Exception::class)
-//    fun removeDocumentFromIndex(docID: String) {
-//        val termToDelete: Term = Term("id", docID)
-//        this.IndxWriter.deleteDocuments(termToDelete)
-//        this.IndxWriter.flush()
-//        print("Document $docID has been removed from the index.\n")
-//    }
 
     @Throws(Exception::class)
     fun deleteIndex() {
@@ -80,11 +66,6 @@ class SimilarityModule(private val directory: String) {
         chainQryBldr.add(q2, BooleanClause.Occur.SHOULD)
         return this.IndxSearcher.search(chainQryBldr.build(), this.DocCnt)
     }
-
-//    @Throws(Exception::class)
-//    fun CloseWriter() {
-//        this.IndxWriter.close( )
-//    }
 
     fun printResults(docs: TopDocs, query: String) {
         print("Query: \"$query\"\nFound results: ${docs.totalHits}\n")

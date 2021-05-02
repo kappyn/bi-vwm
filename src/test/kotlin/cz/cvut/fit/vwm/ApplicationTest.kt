@@ -1,5 +1,6 @@
 package cz.cvut.fit.vwm
 
+import cz.cvut.fit.vwm.service.SimilarityService
 import io.ktor.routing.*
 import io.ktor.http.*
 import io.ktor.locations.*

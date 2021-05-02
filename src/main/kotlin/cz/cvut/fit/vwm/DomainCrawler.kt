@@ -2,6 +2,7 @@ package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.service.PageService
 import cz.cvut.fit.vwm.model.WebDocument
+import cz.cvut.fit.vwm.service.SimilarityService
 import edu.uci.ics.crawler4j.crawler.WebCrawler
 import edu.uci.ics.crawler4j.parser.HtmlParseData
 import edu.uci.ics.crawler4j.url.WebURL
@@ -11,8 +12,7 @@ import org.koin.java.KoinJavaComponent.inject
 import java.util.regex.Pattern
 import edu.uci.ics.crawler4j.crawler.Page as CrawledPage
 
-
-class DomainCrawler(private val similarity: SimilarityModule) : WebCrawler() {
+class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
 
     val service by inject<PageService>(PageService::class.java)
 
@@ -49,16 +49,20 @@ class DomainCrawler(private val similarity: SimilarityModule) : WebCrawler() {
             println("Html length: " + html.length)
             println("Number of outgoing links: " + outlinks.size)
 
-            val luceneDoc: Document = similarity.createDocumentIndex(WebDocument("666", page.webURL.url, text))
-            similarity.addDocumentToIndex(luceneDoc)
+            val luceneDoc: Document = similarity.createDocument(WebDocument("666", page.webURL.url, text))
 
             runBlocking {
+                similarity.addDocument(luceneDoc)
                 service.updatePage(url, outlinks.size, htmlParseData.title, text)
                 service.updateInlinks(outlinks)
             }
         }
     }
 
+    override fun onBeforeExit() {
+        similarity.updateChanges()
+        super.onBeforeExit()
+    }
 
     companion object {
         private val FILTERS: Pattern = Pattern.compile(
