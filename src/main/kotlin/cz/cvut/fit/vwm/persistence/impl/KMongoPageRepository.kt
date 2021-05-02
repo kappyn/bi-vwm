@@ -39,7 +39,7 @@ class KMongoPageRepository : PageRepository {
     }
 
     override suspend fun setPageRank(pageRank: Double) {
-        collection.updateMany(Page::url.exists(), setValue(Page::pageRank, pageRank))
+        collection.updateMany(Page::url.exists(), setValue(Page::pageRank, (0..20).map { if (it == 0) pageRank else 0.0 }))
     }
 
     override suspend fun getAllUrls(): Set<String> {
@@ -51,22 +51,21 @@ class KMongoPageRepository : PageRepository {
     }
 
     override suspend fun computePageRank(pageRankIteration: Int, skip: Long, limit: Long) {
-        val inputCollection = asyncDatabase.getCollection<Page>(if (pageRankIteration == 1) "pages" else "pageRank_" + (pageRankIteration - 1))
-        val outputCollection = asyncDatabase.getCollection<Page>("pageRank_$pageRankIteration")
-        inputCollection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map { it ->
-            val pg = it.pageRank / it.outlinksCount
+        collection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map { it ->
+            val pg = it.pageRank[pageRankIteration - 1] / it.outlinksCount
 
             it.outlinks.map { outlink ->
-                outputCollection.updateOne(Page::url eq outlink, inc(Page::pageRank, pg), UpdateOptions().upsert(true))
+                collection.updateOne(Page::url eq outlink, inc(Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()), pg), UpdateOptions().upsert(true))
             }
-            outputCollection.updateOne(Page::url eq it.url, set(SetTo(Page::outlinks, it.outlinks), SetTo(Page::outlinksCount, it.outlinksCount), SetTo(Page::previousPageRank, it.pageRank)), UpdateOptions().upsert(true))
         }.collect()
     }
 
     override suspend fun alterByDamping(pageRankIteration: Int, skip: Long, limit: Long) {
-        val pageRankCollection = asyncDatabase.getCollection<Page>("pageRank_$pageRankIteration")
-        pageRankCollection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map {
-            pageRankCollection.updateOne(Page::url eq it.url, set(SetTo(Page::pageRank, 0.15 + 0.85 * it.pageRank)), UpdateOptions().upsert(true))
+        collection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map {
+            collection.updateOne(
+                Page::url eq it.url, set(SetTo(Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()), 0.15 + 0.85 * it.pageRank[pageRankIteration])),
+                UpdateOptions().upsert(true)
+            )
         }.collect()
     }
 }
