@@ -1,17 +1,18 @@
 package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.service.PageService
+import cz.cvut.fit.vwm.model.WebDocument
 import edu.uci.ics.crawler4j.crawler.WebCrawler
 import edu.uci.ics.crawler4j.parser.HtmlParseData
 import edu.uci.ics.crawler4j.url.WebURL
 import kotlinx.coroutines.runBlocking
+import org.apache.lucene.document.Document
 import org.koin.java.KoinJavaComponent.inject
 import java.util.regex.Pattern
 import edu.uci.ics.crawler4j.crawler.Page as CrawledPage
 
 
-class DomainCrawler : WebCrawler() {
-
+class DomainCrawler(private val similarity: SimilarityModule) : WebCrawler() {
 
     val service by inject<PageService>(PageService::class.java)
 
@@ -40,15 +41,16 @@ class DomainCrawler : WebCrawler() {
         println("URL: $url")
         if (page.parseData is HtmlParseData) {
             val htmlParseData: HtmlParseData = page.parseData as HtmlParseData
-
             val text: String = htmlParseData.text
             val html: String = htmlParseData.html
-
             val outlinks: Set<WebURL> = htmlParseData.outgoingUrls
 
             println("Text length: " + text.length)
             println("Html length: " + html.length)
             println("Number of outgoing links: " + outlinks.size)
+
+            val luceneDoc: Document = similarity.createDocumentIndex(WebDocument("666", page.webURL.url, text))
+            similarity.addDocumentToIndex(luceneDoc)
 
             runBlocking {
                 service.updatePage(url, outlinks.size, htmlParseData.title, text)

@@ -40,7 +40,7 @@ fun main(args: Array<String>): Unit =
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
     // TODO: move to appropriate place (needed this instance to be accessible across all endpoints)
-    var lucene: SimilarityModule = SimilarityModule("similarity");
+    var similarity: SimilarityModule = SimilarityModule("similarity");
 
     install(Locations) {
     }
@@ -88,7 +88,11 @@ fun Application.module(testing: Boolean = false) {
             controller.addSeed(seed)
 
             // The factory which creates instances of crawlers.
-            val factory: WebCrawlerFactory<DomainCrawler> = WebCrawlerFactory { DomainCrawler() }
+            val factory: WebCrawlerFactory<DomainCrawler> = WebCrawlerFactory { DomainCrawler(similarity) }
+
+            // Creates a new instance of IndexWriter for each crawling session
+            similarity.initIndexWriter()
+            similarity.setDocumentCount(config.maxPagesToFetch)
 
             // Start the crawl. This is a blocking operation, meaning that your code
             // will reach the line after this only when crawling is finished.
@@ -101,54 +105,26 @@ fun Application.module(testing: Boolean = false) {
             }
         }
 
-        post("/init") {
-            try {
-                val aDoc: Document = lucene.createDocumentIndex(
-                    WebDocument(
-                        "1",
-                        "Test 1",
-                        "Entropie je veličina s velkým významem, neboť umožňuje formulovat druhou hlavní větu termodynamiky, a vyjádřit kvantitativně nevratnost tepelných pochodů. Tuto skutečnost vyjadřuje princip růstu entropie."
-                    )
-                )
-                val bDoc: Document = lucene.createDocumentIndex(
-                    WebDocument(
-                        "2",
-                        "Test 2",
-                        "Celková entropie izolované soustavy dvou těles různých teplot tedy roste. Jsou-li teploty dosti blízké, nebo jsou-li tělesa od sebe dostatečně dobře izolována, může být změna entropie libovolně malá. V takové soustavě prakticky nedochází k výměně tepla a soustava je blízká tepelné rovnováze. Děje, které probíhají v takové soustavě, lze považovat za vratné, a jejich entropie se téměř nemění. Při vratném adiabatickém ději může být tedy entropie stálá, avšak nikdy nemůže klesat."
-                    )
-                )
-                val cDoc: Document = lucene.createDocumentIndex(
-                    WebDocument(
-                        "3",
-                        "Test 3",
-                        "Stručně řečeno je entropie střední hodnota informace jednoho kódovaného znaku. Míra entropie souvisí s problematikou generování sekvence náhodných čísel (případně pseudonáhodných čísel), protože sekvence naprosto náhodných čísel by měla mít maximální míru entropie. Shannonova entropie také tvoří limit při bezeztrátové kompresi dat, laicky řečeno komprimovaná data nelze beze ztráty informace „zhustit“ více, než dovoluje jejich entropie."
-                    )
-                )
-                lucene.addDocumentToIndex(aDoc)
-                lucene.addDocumentToIndex(bDoc)
-                lucene.addDocumentToIndex(cDoc)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
         post("/similarity") {
+            // postman: http://0.0.0.0:8080/similarity?q=Francie
             try {
                 val query = context.parameters["q"] ?: "none"
-                lucene.printResults(lucene.querySearch(query))
+                similarity.printResults(similarity.querySearch(query), query)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
 
         post("/clear") {
+            // postman: http://0.0.0.0:8080/clear
             try {
-                lucene.deleteIndex()
+                similarity.deleteIndex()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
+
     routing {
         get("/styles.css") {
             call.respondCss {
