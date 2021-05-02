@@ -2,7 +2,10 @@ package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.Controller.homePage
 import cz.cvut.fit.vwm.Controller.results
-import cz.cvut.fit.vwm.Styles.home
+import cz.cvut.fit.vwm.persistence.PageRepository
+import cz.cvut.fit.vwm.persistence.impl.KMongoPageRepository
+import cz.cvut.fit.vwm.service.PageService
+import cz.cvut.fit.vwm.view.Styles.home
 import edu.uci.ics.crawler4j.crawler.CrawlConfig
 import edu.uci.ics.crawler4j.crawler.CrawlController
 import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory
@@ -19,6 +22,9 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import kotlinx.css.CSSBuilder
 import kotlinx.html.body
+import org.koin.dsl.module
+import org.koin.ktor.ext.Koin
+import org.koin.logger.SLF4JLogger
 
 
 fun main(args: Array<String>): Unit =
@@ -39,6 +45,10 @@ fun Application.module(testing: Boolean = false) {
         }
     }
 
+    install(Koin) {
+        SLF4JLogger()
+        modules(pageRepositoryModule)
+    }
 
     routing {
         get("/") {
@@ -101,3 +111,7 @@ suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
     this.respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)
 }
 
+val pageRepositoryModule = module {
+    single { PageService(get()) }
+    single<PageRepository> { KMongoPageRepository() }
+}

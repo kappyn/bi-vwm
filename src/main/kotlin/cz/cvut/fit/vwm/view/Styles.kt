@@ -1,4 +1,4 @@
-package cz.cvut.fit.vwm
+package cz.cvut.fit.vwm.view
 
 import kotlinx.css.*
 
