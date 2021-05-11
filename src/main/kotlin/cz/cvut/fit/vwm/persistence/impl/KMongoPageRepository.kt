@@ -7,6 +7,9 @@ import cz.cvut.fit.vwm.persistence.PageRepository
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toSet
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.litote.kmongo.*
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.coroutine.CoroutineDatabase
@@ -42,16 +45,21 @@ class KMongoPageRepository : PageRepository {
         collection.updateMany(Page::url.exists(), setValue(Page::pageRank, (0..20).map { if (it == 0) pageRank else 0.0 }))
     }
 
+    @Serializable
+    data class PageRank(@Contextual @SerialName("_id") val url: String, val pageRank: List<Double>)
+
     override suspend fun getPageRank(iteration: Int): Map<String, Double> {
 
-        return collection.projection(
-            Page::url,
-            Page::pageRank
-        ).toList().associate { it.first as String to (it.second?.get(20) ?: 0.0) }
-//        return collection.projection(
-//            Page::url,
-//            Page::pageRank.colProperty.memberWithAdditionalPath(iteration.toString())
-//        ).toList().associate { it.first as String to (it.second ?: 0.0) }
+        return collection.withDocumentClass<PageRank>()
+            .find()
+            .projection(
+                fields(
+                    include(
+                        PageRank::url
+                    ),
+                    PageRank::pageRank.slice(-1)
+                )
+            ).toList().associate { it.url to it.pageRank.first() }
     }
 
     override suspend fun getAllUrls(): Set<String> {
