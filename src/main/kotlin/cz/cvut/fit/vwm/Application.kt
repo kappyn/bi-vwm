@@ -6,6 +6,7 @@ import cz.cvut.fit.vwm.persistence.PageRepository
 import cz.cvut.fit.vwm.persistence.impl.KMongoPageRepository
 import cz.cvut.fit.vwm.service.PageRankService
 import cz.cvut.fit.vwm.service.PageService
+import cz.cvut.fit.vwm.service.SearchService
 import cz.cvut.fit.vwm.service.SimilarityService
 import cz.cvut.fit.vwm.view.Styles.home
 import edu.uci.ics.crawler4j.crawler.CrawlConfig
@@ -57,8 +58,8 @@ fun Application.module(testing: Boolean = false) {
     install(Koin) {
         SLF4JLogger()
         listOf(
-             modules(pageRepositoryModule),
-             modules(similarityModule)
+            modules(pageRepositoryModule),
+            modules(similarityModule)
         )
     }
 
@@ -127,7 +128,7 @@ fun Application.module(testing: Boolean = false) {
         post("/similarity") {
             try {
                 val query = context.parameters["q"] ?: "none"
-                similarity.getResults(query)
+                similarity.printResults(query)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -158,10 +159,11 @@ suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
 
 val similarityModule = module {
     single { SimilarityService(get()) }
-    single { SimilarityModule("similarity")}
+    single { SimilarityModule("similarity") }
 }
 
 val pageRepositoryModule = module {
+    single { SearchService() }
     single { PageService(get()) }
     single { PageRankService(get(), get()) }
     single<PageRepository> { KMongoPageRepository() }

@@ -42,6 +42,18 @@ class KMongoPageRepository : PageRepository {
         collection.updateMany(Page::url.exists(), setValue(Page::pageRank, (0..20).map { if (it == 0) pageRank else 0.0 }))
     }
 
+    override suspend fun getPageRank(iteration: Int): Map<String, Double> {
+
+        return collection.projection(
+            Page::url,
+            Page::pageRank
+        ).toList().associate { it.first as String to (it.second?.get(20) ?: 0.0) }
+//        return collection.projection(
+//            Page::url,
+//            Page::pageRank.colProperty.memberWithAdditionalPath(iteration.toString())
+//        ).toList().associate { it.first as String to (it.second ?: 0.0) }
+    }
+
     override suspend fun getAllUrls(): Set<String> {
         return collection.projection(Page::url).toFlow().toSet()
     }
@@ -67,6 +79,10 @@ class KMongoPageRepository : PageRepository {
                 UpdateOptions().upsert(true)
             )
         }.collect()
+    }
+
+    override suspend fun findOne(url: String): Page {
+        return collection.findOne(Page::url eq url) ?: Page(url)
     }
 }
 

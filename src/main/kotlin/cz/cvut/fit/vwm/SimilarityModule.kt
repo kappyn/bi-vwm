@@ -1,17 +1,24 @@
 package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.model.WebDocument
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.StringField
 import org.apache.lucene.document.TextField
-import org.apache.lucene.index.*
+import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.index.IndexWriter
+import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.search.*
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.apache.lucene.util.QueryBuilder
 import java.nio.file.Paths
+import java.util.*
 
 class SimilarityModule(private val directory: String = "similarity") {
     private var DocCnt: Int
@@ -65,6 +72,19 @@ class SimilarityModule(private val directory: String = "similarity") {
         chainQryBldr.add(q1, BooleanClause.Occur.SHOULD)
         chainQryBldr.add(q2, BooleanClause.Occur.SHOULD)
         return this.IndxSearcher.search(chainQryBldr.build(), this.DocCnt)
+    }
+
+    suspend fun getResults(docs: TopDocs, pg: Map<String, Double>, count: Int, skip: Int): List<WebDocument> {
+        val list = mutableListOf<WebDocument>()
+        val results = TreeMap<Double, WebDocument>(Collections.reverseOrder())
+        if (docs.scoreDocs != null && docs.scoreDocs.isNotEmpty()) {
+            for (sd: ScoreDoc in docs.scoreDocs) {
+                val docRetrieved: Document = this.IndxSearcher.doc(sd.doc);
+                print("Score: " + sd.score + " " + docRetrieved.getField("title").stringValue() + " pagerank: " + pg[docRetrieved.get("title")] + " total: " + sd.score * (pg[docRetrieved.get("title")] ?: 0.0) + "\n")
+                results[sd.score * (pg[docRetrieved.get("title")] ?: 0.0)] = WebDocument(docRetrieved.get("title"), "", "")
+            }
+        }
+        return results.values.asFlow().drop(skip).take(count).toList(list)
     }
 
     fun printResults(docs: TopDocs, query: String) {

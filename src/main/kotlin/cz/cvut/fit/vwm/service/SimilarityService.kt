@@ -21,11 +21,15 @@ class SimilarityService(private val similarityModule: SimilarityModule) {
         similarityModule.finishIndexing()
     }
 
-    fun getResults(query: String) {
-        similarityModule.printResults(similarityModule.querySearch(query), query)
+    suspend fun getResults(query: String, pg: Map<String, Double>, count: Int, skip: Int): List<WebDocument> {
+        return similarityModule.getResults(similarityModule.querySearch(query), pg, count, skip)
     }
 
     fun clear() {
         similarityModule.deleteIndex()
+    }
+
+    fun printResults(query: String) {
+        similarityModule.printResults(similarityModule.querySearch(query), query)
     }
 }

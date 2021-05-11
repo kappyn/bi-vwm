@@ -9,8 +9,10 @@ interface PageRepository {
     suspend fun findByQuery(query: String): List<Page>
 
     suspend fun setPageRank(pageRank: Double)
+    suspend fun getPageRank(iteration: Int = 20): Map<String, Double>
     suspend fun getAllUrls(): Set<String>
     suspend fun computePageRank(pageRankIteration: Int, skip: Long, limit: Long)
     suspend fun getPagesCount(): Long
     suspend fun alterByDamping(pageRankIteration: Int, skip: Long, limit: Long)
+    suspend fun findOne(url: String): Page
 }

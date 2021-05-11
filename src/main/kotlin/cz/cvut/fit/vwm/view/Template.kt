@@ -1,6 +1,6 @@
 package cz.cvut.fit.vwm.view
 
-import cz.cvut.fit.vwm.model.Page
+import cz.cvut.fit.vwm.model.WebDocument
 import kotlinx.html.*
 
 object Template {
@@ -11,7 +11,7 @@ object Template {
         }
     }
 
-    fun results(html: HTML, query: String, pages: List<Page>): HTML = html.apply {
+    fun results(html: HTML, query: String, pages: List<WebDocument>): HTML = html.apply {
         head(this, "PageRank: $query")
         body {
             searchBar(this, query)
@@ -19,8 +19,8 @@ object Template {
                 for (page in pages) {
                     li {
                         div {
-                            a(href = page.url) { h2 { +page.title } }
-                            p { +page.perex }
+                            a(href = page.id) { h2 { +page.title } }
+                            p { +page.content }
                         }
                     }
                 }

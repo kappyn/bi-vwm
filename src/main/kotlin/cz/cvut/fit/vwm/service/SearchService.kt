@@ -1,13 +1,16 @@
 package cz.cvut.fit.vwm.service
 
+import cz.cvut.fit.vwm.model.WebDocument
 import org.koin.java.KoinJavaComponent.inject
 
 class SearchService {
     private val similarity by inject<SimilarityService>(SimilarityService::class.java)
-    // TODO: inject pagerank service
+    private val pagerank by inject<PageRankService>(PageRankService::class.java)
+    private val pageService by inject<PageService>(PageService::class.java)
 
-    fun getResults(query: String) {
-        similarity.getResults(query) // placeholder
+    suspend fun getResults(query: String, count: Int = 10, skip: Int = 0): List<WebDocument> {
+        val pg = pagerank.get()
+        return similarity.getResults(query, pg, count, skip).map { pageService.fillDocument(it) } // placeholder
     }
 
     fun prepareTextSimilarity(maxPagesToFetch: Int) {
@@ -17,6 +20,6 @@ class SearchService {
     fun reset() {
         // this will reset pagerank matrix / search index
         // ...
-        similarity.clear( )
+        similarity.clear()
     }
 }

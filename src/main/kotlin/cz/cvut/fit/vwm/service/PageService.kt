@@ -1,6 +1,7 @@
 package cz.cvut.fit.vwm.service
 
 import cz.cvut.fit.vwm.model.Page
+import cz.cvut.fit.vwm.model.WebDocument
 import cz.cvut.fit.vwm.persistence.PageRepository
 import edu.uci.ics.crawler4j.url.WebURL
 
@@ -17,5 +18,10 @@ class PageService(val repository: PageRepository) {
 
     suspend fun search(query: String): List<Page> {
         return repository.findByQuery(query)
+    }
+
+    suspend fun fillDocument(document: WebDocument): WebDocument {
+        val page: Page = repository.findOne(document.id)
+        return WebDocument(document.id, page.title, page.perex)
     }
 }
