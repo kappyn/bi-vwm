@@ -1,10 +1,7 @@
 package cz.cvut.fit.vwm
 
-import com.google.common.collect.Multimap
-import com.google.common.collect.Ordering
-import com.google.common.collect.TopnTreeMultimap
-import com.google.common.collect.TreeMultimap
 import cz.cvut.fit.vwm.model.WebDocument
+import cz.cvut.fit.vwm.util.TopnTreeMultimap
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.take
@@ -23,7 +20,6 @@ import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.apache.lucene.util.QueryBuilder
 import java.nio.file.Paths
-import java.util.*
 
 class SimilarityModule(private val directory: String = "similarity") {
     private var DocCnt: Int
@@ -61,7 +57,7 @@ class SimilarityModule(private val directory: String = "similarity") {
 
     @Throws(Exception::class)
     fun addDocumentToIndex(docToAdd: Document) {
-        this.IndxWriter.updateDocument(Term("id", docToAdd.get("id")),docToAdd)
+        this.IndxWriter.updateDocument(Term("id", docToAdd.get("id")), docToAdd)
         this.IndxWriter.flush()
         print("Successfully written file " + docToAdd.getField("title").stringValue() + " to the index.\n")
     }
@@ -81,16 +77,15 @@ class SimilarityModule(private val directory: String = "similarity") {
 
     suspend fun getResults(docs: TopDocs, pg: Map<String, Double>, count: Int, skip: Int): List<WebDocument> {
         val list = mutableListOf<WebDocument>()
-        val results: Multimap<Double, WebDocument> = TopnTreeMultimap.create(Comparator.reverseOrder(), { _, _ -> 0 }, count+skip)
-//        val results: Multimap<Double, WebDocument> = TreeMultimap.create(Comparator.reverseOrder(), { o1, o2 -> 0 })
+        val results: TopnTreeMultimap<Double, WebDocument> = TopnTreeMultimap.create(Comparator.reverseOrder(), { _, _ -> 0 }, count + skip)
         if (docs.scoreDocs != null && docs.scoreDocs.isNotEmpty()) {
             for (sd: ScoreDoc in docs.scoreDocs) {
                 val docRetrieved: Document = this.IndxSearcher.doc(sd.doc)
                 val idVal: String = docRetrieved.get("id")
                 val titleVal: String = docRetrieved.get("title")
-                print("Score: " + sd.score + " " + docRetrieved.getField("title").stringValue() + " pagerank: " + pg[titleVal] + " total: " + sd.score * (pg[titleVal] ?: 0.0) + "\n")
+                print("Score: " + sd.score + " " + titleVal + " pagerank: " + pg[idVal] + " total: " + (sd.score + (pg[idVal] ?: 0.0)) / 2 + "\n")
 //                results.put(sd.score * (pg[titleVal] ?: 0.0), WebDocument(docRetrieved.get("title"), "", "")) // similarity weighted by pr
-                results.put((sd.score + (pg[idVal] ?: 0.0))/2, WebDocument(idVal, titleVal, "")) // average out of the two
+                results.put((sd.score + (pg[idVal] ?: 0.0)) / 2, WebDocument(idVal, titleVal, "")) // average out of the two
             }
         }
         return results.values().asFlow().drop(skip).take(count).toList(list)
