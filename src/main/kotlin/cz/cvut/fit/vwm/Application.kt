@@ -120,7 +120,7 @@ fun Application.module(testing: Boolean = false) {
             }
         }
 
-        post("/pageRank") {
+        post("/pagerank") {
 
             GlobalScope.launch {
                 pageRankService.compute(pageRepository.getPagesCount())

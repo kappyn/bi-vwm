@@ -2,6 +2,7 @@ package cz.cvut.fit.vwm
 
 import com.google.common.collect.Multimap
 import com.google.common.collect.Ordering
+import com.google.common.collect.TopnTreeMultimap
 import com.google.common.collect.TreeMultimap
 import cz.cvut.fit.vwm.model.WebDocument
 import kotlinx.coroutines.flow.asFlow
@@ -80,7 +81,8 @@ class SimilarityModule(private val directory: String = "similarity") {
 
     suspend fun getResults(docs: TopDocs, pg: Map<String, Double>, count: Int, skip: Int): List<WebDocument> {
         val list = mutableListOf<WebDocument>()
-        val results: Multimap<Double, WebDocument> = TreeMultimap.create(Comparator.reverseOrder(), { o1, o2 -> 0 })
+        val results: Multimap<Double, WebDocument> = TopnTreeMultimap.create(Comparator.reverseOrder(), { _, _ -> 0 }, count+skip)
+//        val results: Multimap<Double, WebDocument> = TreeMultimap.create(Comparator.reverseOrder(), { o1, o2 -> 0 })
         if (docs.scoreDocs != null && docs.scoreDocs.isNotEmpty()) {
             for (sd: ScoreDoc in docs.scoreDocs) {
                 val docRetrieved: Document = this.IndxSearcher.doc(sd.doc)
