@@ -21,7 +21,7 @@ class KMongoPageRepository : PageRepository {
     val asyncDatabase: CoroutineDatabase
 
     init {
-        asyncDatabase = MongoConfiguration.newClient().getDatabase("vwm")
+        asyncDatabase = MongoConfiguration.getDatabase()
         collection = asyncDatabase.getCollection("pages")
     }
 

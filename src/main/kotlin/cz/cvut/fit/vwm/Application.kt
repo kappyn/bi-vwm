@@ -2,6 +2,7 @@ package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.Controller.homePage
 import cz.cvut.fit.vwm.Controller.results
+import cz.cvut.fit.vwm.persistence.MongoConfiguration
 import cz.cvut.fit.vwm.persistence.PageRepository
 import cz.cvut.fit.vwm.persistence.impl.KMongoPageRepository
 import cz.cvut.fit.vwm.service.PageRankService
@@ -16,6 +17,7 @@ import edu.uci.ics.crawler4j.fetcher.PageFetcher
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer
 import io.ktor.application.*
+import io.ktor.config.*
 import io.ktor.features.*
 import io.ktor.gson.*
 import io.ktor.html.*
@@ -46,6 +48,8 @@ fun Application.module(testing: Boolean = false) {
     val pageRankService by inject<PageRankService>()
     val pageRepository by inject<PageRepository>()
     val similarity: SimilarityService by inject()
+
+    MongoConfiguration.setConfig(environment.config.config("ktor.mongo"))
 
     install(Locations) {
     }
