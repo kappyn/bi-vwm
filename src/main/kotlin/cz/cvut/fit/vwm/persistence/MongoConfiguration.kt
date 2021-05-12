@@ -28,7 +28,7 @@ object MongoConfiguration {
         clientSettings = MongoClientSettings.builder()
             .credential(MongoCredential.createScramSha1Credential(name, "admin", password.toCharArray()))
             .applyToClusterSettings {
-                if (host != null) {
+                if (host != null && srv == null) {
                     it.hosts(mutableListOf(ServerAddress(host)))
                 }
                 if (srv != null) {
