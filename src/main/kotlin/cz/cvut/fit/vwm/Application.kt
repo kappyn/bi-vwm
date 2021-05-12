@@ -105,6 +105,14 @@ fun Application.module(testing: Boolean = false) {
             // will reach the line after this only when crawling is finished.
             controller.startNonBlocking(factory, numberOfCrawlers)
 
+            GlobalScope.launch {
+                controller.waitUntilFinish()
+                similarity.updateChanges()
+                val pages = pageRepository.getPagesCount()
+                pageRepository.setPageRank(1.0 / pages)
+                pageRankService.compute(pages)
+            }
+
             call.respondHtml {
                 body {
                     +"Crawling started"

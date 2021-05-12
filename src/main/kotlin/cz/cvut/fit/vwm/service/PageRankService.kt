@@ -14,6 +14,7 @@ class PageRankService(val pageService: PageService, val pageRepository: PageRepo
     suspend fun compute(count: Long) {
 
         repeat(20) { pageRankIteration ->
+            println("Computing pagerank iteration $pageRankIteration")
             val jobs: MutableList<Job> = mutableListOf()
             repeat(THREADS) { i ->
                 jobs.add(GlobalScope.launch {
@@ -32,6 +33,7 @@ class PageRankService(val pageService: PageService, val pageRepository: PageRepo
 
             jobs.joinAll()
         }
+        println("Pagerank done!!")
     }
 
     suspend fun get(): Map<String, Double> {

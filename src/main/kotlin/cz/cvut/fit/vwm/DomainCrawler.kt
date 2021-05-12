@@ -53,23 +53,13 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
             println("Html length: " + html.length)
             println("Number of outgoing links: " + outlinks.size)
 
-            val luceneDoc: Document = similarity.createDocument(WebDocument("666", page.webURL.url, text))
+            val luceneDoc: Document = similarity.createDocument(WebDocument(page.webURL.url, htmlParseData.title, text))
 
             GlobalScope.launch {
                 similarity.addDocument(luceneDoc)
                 pageService.updatePage(url, outlinks, htmlParseData.title, text)
                 pageService.updateInlinks(outlinks)
             }
-        }
-    }
-
-    override fun onBeforeExit() {
-        similarity.updateChanges()
-        super.onBeforeExit()
-        GlobalScope.launch {
-            val pages = pageRepository.getPagesCount()
-            pageRepository.setPageRank(1.0 / pages)
-            pageRankService.compute(pages)
         }
     }
 

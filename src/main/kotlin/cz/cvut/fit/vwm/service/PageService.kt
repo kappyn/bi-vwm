@@ -21,7 +21,7 @@ class PageService(val repository: PageRepository) {
     }
 
     suspend fun fillDocument(document: WebDocument): WebDocument {
-        val page: Page = repository.findOne(document.id)
-        return WebDocument(document.id, page.title, page.perex)
+        return WebDocument(document.id, document.title, repository.findOne(document.id))
     }
+
 }

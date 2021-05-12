@@ -89,8 +89,8 @@ class KMongoPageRepository : PageRepository {
         }.collect()
     }
 
-    override suspend fun findOne(url: String): Page {
-        return collection.findOne(Page::url eq url) ?: Page(url)
+    override suspend fun findOne(url: String): String {
+        return collection.projection(Page::perex, Page::url eq url).first()?: ""
     }
 }
 
