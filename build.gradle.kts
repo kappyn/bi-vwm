@@ -23,6 +23,10 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+tasks.create("stage") {
+   dependsOn("installDist")
+}
+
 repositories {
     mavenLocal()
     jcenter()
