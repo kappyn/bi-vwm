@@ -3,11 +3,13 @@ package cz.cvut.fit.vwm.persistence
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoCredential
 import com.mongodb.ServerAddress
+import com.mongodb.WriteConcern
 import io.ktor.config.*
 import org.litote.kmongo.coroutine.CoroutineClient
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.reactivestreams.KMongo
+import java.util.concurrent.TimeUnit
 
 object MongoConfiguration {
 
@@ -27,6 +29,11 @@ object MongoConfiguration {
 
         clientSettings = MongoClientSettings.builder()
             .credential(MongoCredential.createScramSha1Credential(name, "admin", password.toCharArray()))
+            .retryWrites(true)
+            .writeConcern(WriteConcern.MAJORITY)
+            .applyToConnectionPoolSettings {
+                it.maxConnectionIdleTime(600000, TimeUnit.MILLISECONDS)
+            }
             .applyToClusterSettings {
                 if (host != null && srv == null) {
                     it.hosts(mutableListOf(ServerAddress(host)))
