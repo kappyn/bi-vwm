@@ -4,7 +4,9 @@ import com.mongodb.MongoClientSettings
 import com.mongodb.MongoCredential
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
+import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import io.ktor.config.*
+import io.netty.channel.nio.NioEventLoopGroup
 import org.litote.kmongo.coroutine.CoroutineClient
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.coroutine.coroutine
@@ -19,6 +21,7 @@ object MongoConfiguration {
     private var host: String? = null
     private lateinit var db : String
     private lateinit var clientSettings: MongoClientSettings
+    private val eventLoopGroup = NioEventLoopGroup()
 
     fun setConfig(config: ApplicationConfig) {
         name = config.propertyOrNull("name")?.getString() ?: ""
@@ -41,6 +44,10 @@ object MongoConfiguration {
                 if (srv != null) {
                     it.srvHost(srv)
                 }
+            }
+            .streamFactoryFactory(NettyStreamFactoryFactory.builder().eventLoopGroup(eventLoopGroup).build())
+            .applyToSslSettings {
+                it.enabled(true)
             }
             .build()
     }
