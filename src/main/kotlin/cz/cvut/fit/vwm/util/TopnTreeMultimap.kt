@@ -1,21 +1,21 @@
-package com.google.common.collect
+package cz.cvut.fit.vwm.util
 
-import java.lang.RuntimeException
-import java.util.Comparator
+import com.google.common.collect.TreeMultimap
 
 class TopnTreeMultimap<K : Comparable<K>, V>(
     keyComparator: Comparator<in K>,
     valueComparator: Comparator<in V>,
-    private val maxSize: Int
-) : TreeMultimap<K, V>(keyComparator, valueComparator) {
+    private val maxSize: Int,
+    val underlying: TreeMultimap<K, V> = TreeMultimap.create(keyComparator, valueComparator)
+) {
 
     private val DEBUG = true
 
     fun put(newKey: K, newValue: V): Boolean {
         var added = false
-        if (size() > maxSize) throw RuntimeException("Code error, should never happen.")
-        if (size() == maxSize) {
-            val keyIterator: Iterator<K> = keySet().iterator()
+        if (underlying.size() > maxSize) throw RuntimeException("Code error, should never happen.")
+        if (underlying.size() == maxSize) {
+            val keyIterator: Iterator<K> = underlying.keySet().iterator()
             val currentMinKey = keyIterator.next()
             if (newKey <= currentMinKey) {
                 if (DEBUG) {
@@ -24,22 +24,22 @@ class TopnTreeMultimap<K : Comparable<K>, V>(
                     )
                 }
             } else {
-                added = super.put(newKey, newValue)
+                added = underlying.put(newKey, newValue)
                 if (added) {
-                    // remove the first element - the min
-                    val entryiIterator: MutableIterator<*> = entryIterator()
-                    entryiIterator.next()
-                    entryiIterator.remove()
+                    underlying.remove(underlying.keys().last(), underlying.values().last())
                 }
             }
         } else {
-            added = super.put(newKey, newValue)
+            added = underlying.put(newKey, newValue)
         }
         return added
     }
 
+    fun values(): MutableCollection<V> {
+        return underlying.values()
+    }
+
     companion object {
-        private const val serialVersionUID = 1L
 
         fun <K : Comparable<K>, V> create(
             keyComparator: Comparator<K>,
