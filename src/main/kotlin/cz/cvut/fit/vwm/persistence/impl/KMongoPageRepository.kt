@@ -7,6 +7,9 @@ import cz.cvut.fit.vwm.persistence.PageRepository
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toSet
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.litote.kmongo.*
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.coroutine.CoroutineDatabase
@@ -42,6 +45,23 @@ class KMongoPageRepository : PageRepository {
         collection.updateMany(Page::url.exists(), setValue(Page::pageRank, (0..20).map { if (it == 0) pageRank else 0.0 }))
     }
 
+    @Serializable
+    data class PageRank(@Contextual @SerialName("_id") val url: String, val pageRank: List<Double>)
+
+    override suspend fun getPageRank(iteration: Int): Map<String, Double> {
+
+        return collection.withDocumentClass<PageRank>()
+            .find()
+            .projection(
+                fields(
+                    include(
+                        PageRank::url
+                    ),
+                    PageRank::pageRank.slice(-1)
+                )
+            ).toList().associate { it.url to it.pageRank.first() }
+    }
+
     override suspend fun getAllUrls(): Set<String> {
         return collection.projection(Page::url).toFlow().toSet()
     }
@@ -67,6 +87,10 @@ class KMongoPageRepository : PageRepository {
                 UpdateOptions().upsert(true)
             )
         }.collect()
+    }
+
+    override suspend fun findOne(url: String): String {
+        return collection.projection(Page::perex, Page::url eq url).first()?: ""
     }
 }
 

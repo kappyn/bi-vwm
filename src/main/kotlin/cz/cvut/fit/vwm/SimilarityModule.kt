@@ -1,12 +1,20 @@
 package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.model.WebDocument
+import cz.cvut.fit.vwm.util.TopnTreeMultimap
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.StringField
 import org.apache.lucene.document.TextField
-import org.apache.lucene.index.*
+import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.index.IndexWriter
+import org.apache.lucene.index.IndexWriterConfig
+import org.apache.lucene.index.Term
 import org.apache.lucene.search.*
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
@@ -36,7 +44,7 @@ class SimilarityModule(private val directory: String = "similarity") {
         val retv: Document = Document()
         retv.add(StringField("id", doc.id, Field.Store.YES))
         retv.add(StringField("title", doc.title, Field.Store.YES))
-        retv.add(TextField("content", doc.content, Field.Store.NO))
+        retv.add(TextField("content", doc.content, Field.Store.YES))
         return retv
     }
 
@@ -49,7 +57,7 @@ class SimilarityModule(private val directory: String = "similarity") {
 
     @Throws(Exception::class)
     fun addDocumentToIndex(docToAdd: Document) {
-        this.IndxWriter.addDocument(docToAdd)
+        this.IndxWriter.updateDocument(Term("id", docToAdd.get("id")), docToAdd)
         this.IndxWriter.flush()
         print("Successfully written file " + docToAdd.getField("title").stringValue() + " to the index.\n")
     }
@@ -65,6 +73,22 @@ class SimilarityModule(private val directory: String = "similarity") {
         chainQryBldr.add(q1, BooleanClause.Occur.SHOULD)
         chainQryBldr.add(q2, BooleanClause.Occur.SHOULD)
         return this.IndxSearcher.search(chainQryBldr.build(), this.DocCnt)
+    }
+
+    suspend fun getResults(docs: TopDocs, pg: Map<String, Double>, count: Int, skip: Int): List<WebDocument> {
+        val list = mutableListOf<WebDocument>()
+        val results: TopnTreeMultimap<Double, WebDocument> = TopnTreeMultimap.create(Comparator.reverseOrder(), { _, _ -> 0 }, count + skip)
+        if (docs.scoreDocs != null && docs.scoreDocs.isNotEmpty()) {
+            for (sd: ScoreDoc in docs.scoreDocs) {
+                val docRetrieved: Document = this.IndxSearcher.doc(sd.doc)
+                val idVal: String = docRetrieved.get("id")
+                val titleVal: String = docRetrieved.get("title")
+                print("Score: " + sd.score + " " + titleVal + " pagerank: " + pg[idVal] + " total: " + (sd.score + (pg[idVal] ?: 0.0)) / 2 + "\n")
+//                results.put(sd.score * (pg[titleVal] ?: 0.0), WebDocument(docRetrieved.get("title"), "", "")) // similarity weighted by pr
+                results.put((sd.score + (pg[idVal] ?: 0.0)) / 2, WebDocument(idVal, titleVal, "")) // average out of the two
+            }
+        }
+        return results.values().asFlow().drop(skip).take(count).toList(list)
     }
 
     fun printResults(docs: TopDocs, query: String) {
