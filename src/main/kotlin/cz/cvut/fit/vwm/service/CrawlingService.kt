@@ -52,6 +52,9 @@ class CrawlingService {
 
         config.maxDepthOfCrawling = Integer.parseUnsignedInt(context.parameters["d"] ?: "1")
         config.maxPagesToFetch = Integer.parseUnsignedInt(context.parameters["p"] ?: "10")
+        config.threadShutdownDelaySeconds = 5
+        config.cleanupDelaySeconds = 1
+        config.politenessDelay = 50
 
         val pageFetcher = PageFetcher(config)
         val robotstxtConfig = RobotstxtConfig()
