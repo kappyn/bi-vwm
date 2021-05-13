@@ -69,4 +69,5 @@ val pageRepositoryModule = module {
     single { PageService(get()) }
     single { PageRankService(get(), get()) }
     single<PageRepository> { KMongoPageRepository() }
+    single { CrawlingService() }
 }
