@@ -3,7 +3,7 @@ package cz.cvut.fit.vwm.view
 import kotlinx.css.*
 
 object Styles {
-    fun home(builder: CSSBuilder): CSSBuilder = builder.apply {
+    fun homeCss(builder: CSSBuilder): CSSBuilder = builder.apply {
         body {
             margin(0.px, LinearDimension.auto)
             padding(20.vw)

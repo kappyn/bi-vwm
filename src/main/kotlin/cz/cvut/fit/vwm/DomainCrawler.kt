@@ -1,10 +1,9 @@
 package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.model.WebDocument
-import cz.cvut.fit.vwm.persistence.PageRepository
-import cz.cvut.fit.vwm.service.PageRankService
 import cz.cvut.fit.vwm.service.PageService
 import cz.cvut.fit.vwm.service.SimilarityService
+import cz.cvut.fit.vwm.util.Logger
 import edu.uci.ics.crawler4j.crawler.WebCrawler
 import edu.uci.ics.crawler4j.parser.HtmlParseData
 import edu.uci.ics.crawler4j.url.WebURL
@@ -18,9 +17,6 @@ import edu.uci.ics.crawler4j.crawler.Page as CrawledPage
 class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
 
     val pageService by inject<PageService>(PageService::class.java)
-    val pageRankService by inject<PageRankService>(PageRankService::class.java)
-    val pageRepository by inject<PageRepository>(PageRepository::class.java)
-
 
     /**
      * This method receives two parameters. The first parameter is the page
@@ -42,16 +38,16 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
      */
     override fun visit(page: CrawledPage) {
         val url: String = page.webURL.url
-        println("URL: $url")
+        Logger.info("URL: $url")
         if (page.parseData is HtmlParseData) {
             val htmlParseData: HtmlParseData = page.parseData as HtmlParseData
             val text: String = htmlParseData.text
             val html: String = htmlParseData.html
             val outlinks: Set<WebURL> = htmlParseData.outgoingUrls.filter { shouldVisit(it) }.toSet()
 
-            println("Text length: " + text.length)
-            println("Html length: " + html.length)
-            println("Number of outgoing links: " + outlinks.size)
+            Logger.debug("Text length: " + text.length)
+            Logger.debug("Html length: " + html.length)
+            Logger.debug("Number of outgoing links: " + outlinks.size)
 
             val luceneDoc: Document = similarity.createDocument(WebDocument(page.webURL.url, htmlParseData.title, text))
 

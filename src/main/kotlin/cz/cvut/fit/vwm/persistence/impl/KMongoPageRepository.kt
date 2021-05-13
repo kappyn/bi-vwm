@@ -57,7 +57,7 @@ class KMongoPageRepository : PageRepository {
                     include(
                         PageRank::url
                     ),
-                    PageRank::pageRank.slice(-1)
+                    PageRank::pageRank.slice(iteration, 1)
                 )
             ).toList().associate { it.url to it.pageRank.first() }
     }
@@ -90,7 +90,7 @@ class KMongoPageRepository : PageRepository {
     }
 
     override suspend fun findOne(url: String): String {
-        return collection.projection(Page::perex, Page::url eq url).first()?: ""
+        return collection.projection(Page::perex, Page::url eq url).first() ?: ""
     }
 }
 

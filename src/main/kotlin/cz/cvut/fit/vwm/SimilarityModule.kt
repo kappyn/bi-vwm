@@ -1,6 +1,7 @@
 package cz.cvut.fit.vwm
 
 import cz.cvut.fit.vwm.model.WebDocument
+import cz.cvut.fit.vwm.util.Logger
 import cz.cvut.fit.vwm.util.TopnTreeMultimap
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.drop
@@ -36,7 +37,7 @@ class SimilarityModule(private val directory: String = "similarity") {
         this.IndxSearcher = IndexSearcher(DirectoryReader.open(this.IndxWriter))
         this.QryBuilder = QueryBuilder(this.Analyzer)
         this.DocCnt = 1000000
-        print("Similarity module initialized in \"$directory\".\n")
+        Logger.info("Similarity module initialized in \"$directory\".\n")
     }
 
     @Throws(Exception::class)
@@ -52,14 +53,14 @@ class SimilarityModule(private val directory: String = "similarity") {
     fun deleteIndex() {
         this.IndxWriter.deleteAll()
         this.IndxWriter.commit()
-        print("Lucene index has been deleted.\n")
+        Logger.info("Lucene index has been deleted.\n")
     }
 
     @Throws(Exception::class)
     fun addDocumentToIndex(docToAdd: Document) {
         this.IndxWriter.updateDocument(Term("id", docToAdd.get("id")), docToAdd)
         this.IndxWriter.flush()
-        print("Successfully written file " + docToAdd.getField("title").stringValue() + " to the index.\n")
+        Logger.info("Successfully written file " + docToAdd.getField("title").stringValue() + " to the index.\n")
     }
 
     @Throws(Exception::class)
@@ -83,7 +84,7 @@ class SimilarityModule(private val directory: String = "similarity") {
                 val docRetrieved: Document = this.IndxSearcher.doc(sd.doc)
                 val idVal: String = docRetrieved.get("id")
                 val titleVal: String = docRetrieved.get("title")
-                print("Score: " + sd.score + " " + titleVal + " pagerank: " + pg[idVal] + " total: " + (sd.score + (pg[idVal] ?: 0.0)) / 2 + "\n")
+                Logger.info("Score: " + sd.score + " " + titleVal + " pagerank: " + pg[idVal] + " total: " + (sd.score + (pg[idVal] ?: 0.0)) / 2)
 //                results.put(sd.score * (pg[titleVal] ?: 0.0), WebDocument(docRetrieved.get("title"), "", "")) // similarity weighted by pr
                 results.put((sd.score + (pg[idVal] ?: 0.0)) / 2, WebDocument(idVal, titleVal, "")) // average out of the two
             }
@@ -92,14 +93,14 @@ class SimilarityModule(private val directory: String = "similarity") {
     }
 
     fun printResults(docs: TopDocs, query: String) {
-        print("Query: \"$query\"\nFound results: ${docs.totalHits}\n")
+        Logger.info("Query: \"$query\"\nFound results: ${docs.totalHits}\n")
         if (docs.scoreDocs != null && docs.scoreDocs.isNotEmpty()) {
             for (sd: ScoreDoc in docs.scoreDocs) {
                 val docRetrieved: Document = this.IndxSearcher.doc(sd.doc);
-                print("Score: " + sd.score + " " + docRetrieved.getField("title").stringValue() + "\n")
+                Logger.info("Score: " + sd.score + " " + docRetrieved.getField("title").stringValue() + "\n")
             }
         } else {
-            print("Score docs are empty.\n")
+            Logger.info("Score docs are empty.\n")
         }
     }
 
