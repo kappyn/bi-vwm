@@ -30,13 +30,9 @@ class PageRankService(val pageService: PageService, val pageRepository: PageRepo
             jobs.joinAll()
             jobs.clear()
 
-            repeat(THREADS) { i ->
-                jobs.add(GlobalScope.launch {
-                    pageRepository.alterByDamping(pageRankIteration + 1, i * (count / THREADS), count / THREADS)
-                })
-            }
 
-            jobs.joinAll()
+            pageRepository.alterByDamping(pageRankIteration + 1)
+
         }
         Logger.info("Pagerank done!!")
     }
