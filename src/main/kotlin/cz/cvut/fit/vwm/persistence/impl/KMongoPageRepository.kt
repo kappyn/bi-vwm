@@ -4,6 +4,7 @@ import com.mongodb.client.model.UpdateOptions
 import cz.cvut.fit.vwm.model.Page
 import cz.cvut.fit.vwm.persistence.MongoConfiguration
 import cz.cvut.fit.vwm.persistence.PageRepository
+import cz.cvut.fit.vwm.util.Logger
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toSet
@@ -21,8 +22,10 @@ class KMongoPageRepository : PageRepository {
     val asyncDatabase: CoroutineDatabase
 
     init {
-        asyncDatabase = MongoConfiguration.newClient().getDatabase("vwm")
+        asyncDatabase = MongoConfiguration.getDatabase()
         collection = asyncDatabase.getCollection("pages")
+
+        Logger.info(mul(Page::pageRank.colProperty.memberWithAdditionalPath(5.toString()), 0.85).json)
     }
 
     override suspend fun updatePage(url: String, outlinks: List<String>, title: String, perex: String) {
@@ -57,7 +60,7 @@ class KMongoPageRepository : PageRepository {
                     include(
                         PageRank::url
                     ),
-                    PageRank::pageRank.slice(-1)
+                    PageRank::pageRank.slice(iteration, 1)
                 )
             ).toList().associate { it.url to it.pageRank.first() }
     }
@@ -73,24 +76,24 @@ class KMongoPageRepository : PageRepository {
     override suspend fun computePageRank(pageRankIteration: Int, skip: Long, limit: Long) {
         collection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map { it ->
             val pg = it.pageRank[pageRankIteration - 1] / it.outlinksCount
-
-            it.outlinks.map { outlink ->
-                collection.updateOne(Page::url eq outlink, inc(Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()), pg), UpdateOptions().upsert(true))
-            }
+            collection.updateMany(Page::url `in` it.outlinks, inc(Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()), pg))
         }.collect()
     }
 
-    override suspend fun alterByDamping(pageRankIteration: Int, skip: Long, limit: Long) {
-        collection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map {
-            collection.updateOne(
-                Page::url eq it.url, set(SetTo(Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()), 0.15 + 0.85 * it.pageRank[pageRankIteration])),
-                UpdateOptions().upsert(true)
-            )
-        }.collect()
+    override suspend fun alterByDamping(pageRankIteration: Int) {
+        collection.updateMany(
+            Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()).exists(),
+            mul(Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()), 0.85)
+
+        )
+        collection.updateMany(
+            Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()).exists(),
+            inc(Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()), 0.15)
+        )
     }
 
     override suspend fun findOne(url: String): String {
-        return collection.projection(Page::perex, Page::url eq url).first()?: ""
+        return collection.projection(Page::perex, Page::url eq url).first() ?: ""
     }
 }
 

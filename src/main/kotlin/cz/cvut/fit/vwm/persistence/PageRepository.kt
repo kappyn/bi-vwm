@@ -13,6 +13,6 @@ interface PageRepository {
     suspend fun getAllUrls(): Set<String>
     suspend fun computePageRank(pageRankIteration: Int, skip: Long, limit: Long)
     suspend fun getPagesCount(): Long
-    suspend fun alterByDamping(pageRankIteration: Int, skip: Long, limit: Long)
+    suspend fun alterByDamping(pageRankIteration: Int)
     suspend fun findOne(url: String): String
 }
