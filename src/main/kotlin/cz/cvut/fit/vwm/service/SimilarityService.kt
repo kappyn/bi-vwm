@@ -1,6 +1,7 @@
 package cz.cvut.fit.vwm.service
 
 import cz.cvut.fit.vwm.SimilarityModule
+import cz.cvut.fit.vwm.model.SearchResult
 import cz.cvut.fit.vwm.model.WebDocument
 import org.apache.lucene.document.Document
 
@@ -21,7 +22,7 @@ class SimilarityService(private val similarityModule: SimilarityModule) {
         similarityModule.finishIndexing()
     }
 
-    suspend fun getResults(query: String, pg: Map<String, Double>, count: Int, skip: Int): List<WebDocument> {
+    suspend fun getResults(query: String, pg: Map<String, Double>, count: Int, skip: Int): SearchResult {
         return similarityModule.getResults(similarityModule.querySearch(query), pg, count, skip)
     }
 

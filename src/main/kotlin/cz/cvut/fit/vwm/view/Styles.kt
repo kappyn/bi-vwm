@@ -1,6 +1,7 @@
 package cz.cvut.fit.vwm.view
 
 import kotlinx.css.*
+import kotlinx.css.Float
 
 object Styles {
     fun homeCss(builder: CSSBuilder): CSSBuilder = builder.apply {
@@ -24,6 +25,21 @@ object Styles {
         }
         rule("input[type=submit]") {
             padding(10.px, 20.px)
+        }
+
+        rule("div.paginationItem") {
+            float = Float.left
+            display = Display.inlineBlock
+            padding(10.px)
+        }
+
+        rule("body.results") {
+            paddingTop = 0.px
+        }
+
+        rule(".pagination") {
+            textAlign = TextAlign.center
+            width = 100.pct
         }
 
     }
