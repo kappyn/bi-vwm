@@ -1,0 +1,118 @@
+{
+	"info": {
+		"_postman_id": "e86475e0-4a1f-4437-96e0-72a3f6e9f0d2",
+		"name": "main",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "search",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://83-229-84-237.cloud-xip.io/?query=Architektura",
+					"protocol": "http",
+					"host": [
+						"83-229-84-237",
+						"cloud-xip",
+						"io"
+					],
+					"path": [
+						""
+					],
+					"query": [
+						{
+							"key": "query",
+							"value": "Architektura"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "start_crawler",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://83-229-84-237.cloud-xip.io/start?p=50&d=2&seed=https://cs.wikipedia.org/wiki/Fakulta_informa%C4%8Dn%C3%ADch_technologi%C3%AD_%C4%8CVUT",
+					"protocol": "http",
+					"host": [
+						"83-229-84-237",
+						"cloud-xip",
+						"io"
+					],
+					"path": [
+						"start"
+					],
+					"query": [
+						{
+							"key": "p",
+							"value": "50",
+							"description": "pages to crawl"
+						},
+						{
+							"key": "d",
+							"value": "2",
+							"description": "depth of crawled pages"
+						},
+						{
+							"key": "seed",
+							"value": "https://cs.wikipedia.org/wiki/Fakulta_informa%C4%8Dn%C3%ADch_technologi%C3%AD_%C4%8CVUT",
+							"description": "starting seed"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "similarity",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://83-229-84-237.cloud-xip.io/similarity?q=Plaga",
+					"protocol": "http",
+					"host": [
+						"83-229-84-237",
+						"cloud-xip",
+						"io"
+					],
+					"path": [
+						"similarity"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "Plaga"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "clear",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://83-229-84-237.cloud-xip.io/clear",
+					"protocol": "http",
+					"host": [
+						"83-229-84-237",
+						"cloud-xip",
+						"io"
+					],
+					"path": [
+						"clear"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
