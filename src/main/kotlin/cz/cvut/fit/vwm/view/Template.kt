@@ -1,6 +1,7 @@
 package cz.cvut.fit.vwm.view
 
 import cz.cvut.fit.vwm.model.WebDocument
+import io.ktor.http.*
 import kotlinx.html.*
 
 object Template {
@@ -11,16 +12,33 @@ object Template {
         }
     }
 
-    fun results(html: HTML, query: String, pages: List<WebDocument>): HTML = html.apply {
+    fun results(html: HTML, query: String, results: List<WebDocument>, page: Int, url: URLBuilder): HTML = html.apply {
         head(this, "PageRank: $query")
-        body {
+        body(classes = "results") {
             searchBar(this, query)
+            pagination(this, page, url)
             ul {
-                for (page in pages) {
+                for (page in results) {
                     li {
                         div {
                             a(href = page.id) { h2 { +page.title } }
                             p { +page.content }
+                        }
+                    }
+                }
+            }
+            pagination(this, page, url)
+        }
+    }
+
+    private fun pagination(body: BODY, page: Int, url: URLBuilder) = body.apply {
+        div(classes = "pagination") {
+            for (i in 1..10) {
+                div(classes = "paginationItem") {
+                    when (i) {
+                        page -> div { +"$i" }
+                        else -> a(href = url.apply { parameters["page"] = i.toString() }.buildString()) {
+                            div { +"$i" }
                         }
                     }
                 }

@@ -9,8 +9,7 @@ class SearchService {
     private val pageService by inject<PageService>(PageService::class.java)
 
     suspend fun getResults(query: String, count: Int = 10, skip: Int = 0): List<WebDocument> {
-        val pg = pagerank.get()
-        return similarity.getResults(query, pg, count, skip).map { pageService.fillDocument(it) } // placeholder
+        return similarity.getResults(query, count, skip).map { pageService.fillDocument(it) }
     }
 
     fun prepareTextSimilarity(maxPagesToFetch: Int) {

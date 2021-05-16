@@ -7,6 +7,7 @@ import io.ktor.html.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.util.*
 import kotlinx.css.CSSBuilder
 
 fun Application.frontendRoutes() {
@@ -19,8 +20,9 @@ fun Application.frontendRoutes() {
 fun Route.homeRoute() {
     get("/") {
         call.respondHtml {
+            val page = context.parameters["page"]?.toIntOrNull() ?: 1
             if (context.parameters.contains("query"))
-                Controller.results(this, context.parameters["query"] as String)
+                Controller.results(this, context.parameters["query"] as String, page, URLBuilder.createFromCall(call))
             else
                 Controller.homePage(this)
         }

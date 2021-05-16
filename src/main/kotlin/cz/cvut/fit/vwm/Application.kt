@@ -60,7 +60,7 @@ fun applyApplicationConfig(config: ApplicationConfig) {
 }
 
 val similarityModule = module {
-    single { SimilarityService(get()) }
+    single { SimilarityService(get(), get()) }
     single { SimilarityModule("similarity") }
 }
 

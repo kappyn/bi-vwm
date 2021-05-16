@@ -26,5 +26,19 @@ object Styles {
             padding(10.px, 20.px)
         }
 
+        rule("div.paginationItem") {
+            display = Display.inlineBlock
+            padding(10.px)
+        }
+
+        rule("body.results") {
+            paddingTop = 0.px
+        }
+
+        rule(".pagination") {
+            textAlign = TextAlign.center
+            width = 100.pct
+        }
+
     }
 }

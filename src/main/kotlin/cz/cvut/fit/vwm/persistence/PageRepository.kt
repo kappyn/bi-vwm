@@ -15,4 +15,5 @@ interface PageRepository {
     suspend fun getPagesCount(): Long
     suspend fun alterByDamping(pageRankIteration: Int)
     suspend fun findOne(url: String): String
+    suspend fun clear()
 }

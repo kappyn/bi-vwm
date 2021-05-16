@@ -84,9 +84,10 @@ class SimilarityModule(private val directory: String = "similarity") {
                 val docRetrieved: Document = this.IndxSearcher.doc(sd.doc)
                 val idVal: String = docRetrieved.get("id")
                 val titleVal: String = docRetrieved.get("title")
-                Logger.info("Score: " + sd.score + " " + titleVal + " pagerank: " + pg[idVal] + " total: " + (sd.score + (pg[idVal] ?: 0.0)) / 2)
+                val pr = pg[idVal]
+                Logger.info("Score: " + sd.score + " " + titleVal + " pagerank: " + pr + " total: " + (sd.score + (pr ?: 0.0)) / 2)
 //                results.put(sd.score * (pg[titleVal] ?: 0.0), WebDocument(docRetrieved.get("title"), "", "")) // similarity weighted by pr
-                results.put((sd.score + (pg[idVal] ?: 0.0)) / 2, WebDocument(idVal, titleVal, "")) // average out of the two
+                results.put((sd.score + (pr ?: 0.0)) / 2, WebDocument(idVal, titleVal, "")) // average out of the two
             }
         }
         return results.values().asFlow().drop(skip).take(count).toList(list)
