@@ -6,6 +6,7 @@ import cz.cvut.fit.vwm.service.PageRankService
 import cz.cvut.fit.vwm.service.SimilarityService
 import io.ktor.application.*
 import io.ktor.html.*
+import io.ktor.response.*
 import io.ktor.routing.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -49,7 +50,6 @@ fun Route.startPageRank() {
                 +"Computing started"
             }
         }
-
     }
 }
 
@@ -62,6 +62,7 @@ fun Route.printSimilarityResults() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        call.respond(200)
     }
 }
 
@@ -75,5 +76,6 @@ fun Route.clearSimilarityIndex() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        call.respond(200)
     }
 }
