@@ -1,6 +1,5 @@
 package cz.cvut.fit.vwm
 
-import cz.cvut.fit.vwm.model.SearchResult
 import cz.cvut.fit.vwm.model.WebDocument
 import cz.cvut.fit.vwm.util.Logger
 import cz.cvut.fit.vwm.util.TopnTreeMultimap
@@ -77,7 +76,7 @@ class SimilarityModule(private val directory: String = "similarity") {
         return this.IndxSearcher.search(chainQryBldr.build(), this.DocCnt)
     }
 
-    suspend fun getResults(docs: TopDocs, pg: Map<String, Double>, count: Int, skip: Int): SearchResult {
+    suspend fun getResults(docs: TopDocs, pg: Map<String, Double>, count: Int, skip: Int): List<WebDocument> {
         val list = mutableListOf<WebDocument>()
         val results: TopnTreeMultimap<Double, WebDocument> = TopnTreeMultimap.create(Comparator.reverseOrder(), { _, _ -> 0 }, count + skip)
         if (docs.scoreDocs != null && docs.scoreDocs.isNotEmpty()) {
@@ -91,7 +90,7 @@ class SimilarityModule(private val directory: String = "similarity") {
                 results.put((sd.score + (pr ?: 0.0)) / 2, WebDocument(idVal, titleVal, "")) // average out of the two
             }
         }
-        return SearchResult(results.values().asFlow().drop(skip).take(count).toList(list), pg.size)
+        return results.values().asFlow().drop(skip).take(count).toList(list)
     }
 
     fun printResults(docs: TopDocs, query: String) {

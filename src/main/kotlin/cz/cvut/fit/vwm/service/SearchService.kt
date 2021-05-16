@@ -1,6 +1,6 @@
 package cz.cvut.fit.vwm.service
 
-import cz.cvut.fit.vwm.model.SearchResult
+import cz.cvut.fit.vwm.model.WebDocument
 import org.koin.java.KoinJavaComponent.inject
 
 class SearchService {
@@ -8,10 +8,8 @@ class SearchService {
     private val pagerank by inject<PageRankService>(PageRankService::class.java)
     private val pageService by inject<PageService>(PageService::class.java)
 
-    suspend fun getResults(query: String, count: Int = 10, skip: Int = 0): SearchResult {
-        val result = similarity.getResults(query, count, skip)
-        result.results = result.results.map { pageService.fillDocument(it) }
-        return result
+    suspend fun getResults(query: String, count: Int = 10, skip: Int = 0): List<WebDocument> {
+        return similarity.getResults(query, count, skip).map { pageService.fillDocument(it) }
     }
 
     fun prepareTextSimilarity(maxPagesToFetch: Int) {

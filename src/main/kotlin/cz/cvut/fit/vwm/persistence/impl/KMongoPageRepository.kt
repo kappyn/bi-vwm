@@ -4,6 +4,7 @@ import com.mongodb.client.model.UpdateOptions
 import cz.cvut.fit.vwm.model.Page
 import cz.cvut.fit.vwm.persistence.MongoConfiguration
 import cz.cvut.fit.vwm.persistence.PageRepository
+import cz.cvut.fit.vwm.service.PageRankService
 import cz.cvut.fit.vwm.util.Logger
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
@@ -45,7 +46,7 @@ class KMongoPageRepository : PageRepository {
     }
 
     override suspend fun setPageRank(pageRank: Double) {
-        collection.updateMany(Page::url.exists(), setValue(Page::pageRank, (0..20).map { if (it == 0) pageRank else 0.0 }))
+        collection.updateMany(Page::url.exists(), setValue(Page::pageRank, (0..PageRankService.ITERATIONS).map { if (it == 0) pageRank else 0.0 }))
     }
 
     @Serializable

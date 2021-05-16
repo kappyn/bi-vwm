@@ -1,7 +1,6 @@
 package cz.cvut.fit.vwm.service
 
 import cz.cvut.fit.vwm.SimilarityModule
-import cz.cvut.fit.vwm.model.SearchResult
 import cz.cvut.fit.vwm.model.WebDocument
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -25,7 +24,7 @@ class SimilarityService(private val similarityModule: SimilarityModule, private 
         similarityModule.finishIndexing()
     }
 
-    suspend fun getResults(query: String, count: Int, skip: Int): SearchResult {
+    suspend fun getResults(query: String, count: Int, skip: Int): List<WebDocument> {
 
         val pgjob = GlobalScope.async {
             return@async pageRankService.get()

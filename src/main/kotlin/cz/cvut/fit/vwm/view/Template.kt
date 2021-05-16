@@ -1,6 +1,6 @@
 package cz.cvut.fit.vwm.view
 
-import cz.cvut.fit.vwm.model.SearchResult
+import cz.cvut.fit.vwm.model.WebDocument
 import io.ktor.http.*
 import kotlinx.html.*
 
@@ -12,13 +12,13 @@ object Template {
         }
     }
 
-    fun results(html: HTML, query: String, results: SearchResult, page: Int, url: URLBuilder): HTML = html.apply {
+    fun results(html: HTML, query: String, results: List<WebDocument>, page: Int, url: URLBuilder): HTML = html.apply {
         head(this, "PageRank: $query")
         body(classes = "results") {
             searchBar(this, query)
             pagination(this, page, url)
             ul {
-                for (page in results.results) {
+                for (page in results) {
                     li {
                         div {
                             a(href = page.id) { h2 { +page.title } }
