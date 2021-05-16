@@ -54,7 +54,7 @@ class KMongoPageRepository : PageRepository {
     override suspend fun getPageRank(iteration: Int): Map<String, Double> {
 
         return collection.withDocumentClass<PageRank>()
-            .find()
+            .find(Page::title.exists())
             .projection(
                 fields(
                     include(
@@ -74,7 +74,7 @@ class KMongoPageRepository : PageRepository {
     }
 
     override suspend fun computePageRank(pageRankIteration: Int, skip: Long, limit: Long) {
-        collection.find().skip(skip.toInt()).limit(limit.toInt()).toFlow().map { it ->
+        collection.find(Page::outlinksCount gt 0).skip(skip.toInt()).limit(limit.toInt()).toFlow().map {
             val pg = it.pageRank[pageRankIteration - 1] / it.outlinksCount
             collection.updateMany(Page::url `in` it.outlinks, inc(Page::pageRank.colProperty.memberWithAdditionalPath(pageRankIteration.toString()), pg))
         }.collect()
