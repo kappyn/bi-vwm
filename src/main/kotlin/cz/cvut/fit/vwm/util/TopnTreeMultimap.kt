@@ -15,8 +15,8 @@ class TopnTreeMultimap<K : Comparable<K>, V>(
         var added = false
         if (underlying.size() > maxSize) throw RuntimeException("Code error, should never happen.")
         if (underlying.size() == maxSize) {
-            val keyIterator: Iterator<K> = underlying.keySet().iterator()
-            val currentMinKey = keyIterator.next()
+
+            val currentMinKey = underlying.keys().last()
             if (newKey <= currentMinKey) {
                 if (DEBUG) {
                     println(
