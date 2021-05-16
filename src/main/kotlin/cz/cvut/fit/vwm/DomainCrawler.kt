@@ -49,7 +49,8 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
             Logger.debug("Html length: " + html.length)
             Logger.debug("Number of outgoing links: " + outlinks.size)
 
-            val luceneDoc: Document = similarity.createDocument(WebDocument(page.webURL.url, htmlParseData.title, text))
+            val title = htmlParseData.title.replace(" \u2013 Wikipedie", "")
+            val luceneDoc: Document = similarity.createDocument(WebDocument(page.webURL.url, title, text))
 
             GlobalScope.launch {
                 similarity.addDocument(luceneDoc)
