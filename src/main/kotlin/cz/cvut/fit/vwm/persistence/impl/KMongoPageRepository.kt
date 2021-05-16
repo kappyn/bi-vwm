@@ -5,7 +5,6 @@ import cz.cvut.fit.vwm.model.Page
 import cz.cvut.fit.vwm.persistence.MongoConfiguration
 import cz.cvut.fit.vwm.persistence.PageRepository
 import cz.cvut.fit.vwm.service.PageRankService
-import cz.cvut.fit.vwm.util.Logger
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toSet
@@ -16,6 +15,7 @@ import org.litote.kmongo.*
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.coroutine.projection
+import kotlin.math.abs
 
 class KMongoPageRepository : PageRepository {
 
@@ -25,12 +25,14 @@ class KMongoPageRepository : PageRepository {
     init {
         asyncDatabase = MongoConfiguration.getDatabase()
         collection = asyncDatabase.getCollection("pages")
-
-        Logger.info(mul(Page::pageRank.colProperty.memberWithAdditionalPath(5.toString()), 0.85).json)
     }
 
     override suspend fun updatePage(url: String, outlinks: List<String>, title: String, perex: String) {
-        collection.updateOne(Page::url eq url, set(SetTo(Page::outlinksCount, outlinks.size), SetTo(Page::outlinks, outlinks), SetTo(Page::title, title), SetTo(Page::perex, perex.take(150) + "...")), UpdateOptions().upsert(true))
+        collection.updateOne(
+            Page::url eq url,
+            set(SetTo(Page::outlinksCount, outlinks.size), SetTo(Page::outlinks, outlinks), SetTo(Page::title, title), SetTo(Page::perex, perex.drop(abs(perex.indexOf(title, 60)) - 1).take(350) + "...")),
+            UpdateOptions().upsert(true)
+        )
     }
 
     override suspend fun incrementInlink(url: String) {
@@ -95,6 +97,10 @@ class KMongoPageRepository : PageRepository {
 
     override suspend fun findOne(url: String): String {
         return collection.projection(Page::perex, Page::url eq url).first() ?: ""
+    }
+
+    override suspend fun clear() {
+        asyncDatabase.dropCollection("pages")
     }
 }
 

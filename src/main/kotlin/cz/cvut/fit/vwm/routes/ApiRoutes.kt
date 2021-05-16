@@ -67,9 +67,11 @@ fun Route.printSimilarityResults() {
 
 fun Route.clearSimilarityIndex() {
     val similarity: SimilarityService by inject()
+    val pageRepository: PageRepository by inject()
     post("/clear") {
         try {
             similarity.clear()
+            pageRepository.clear()
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -54,7 +54,7 @@ class DomainCrawler(private val similarity: SimilarityService) : WebCrawler() {
 
             GlobalScope.launch {
                 similarity.addDocument(luceneDoc)
-                pageService.updatePage(url, outlinks, htmlParseData.title, text)
+                pageService.updatePage(url, outlinks, title, text)
                 pageService.updateInlinks(outlinks)
             }
         }
